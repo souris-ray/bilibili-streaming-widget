@@ -573,27 +573,11 @@
 
             // Glass (Backdrop Filter)
             if (style.glass_blur > 0) {
-                // For glass, we often want rgba for background if using solid. 
-                // If utilizing opacity slider, we can enforce it here by hex->rgba or just opacity prop?
-                // Simple approach: apply opacity to container
+
                 css += `backdrop-filter: blur(${style.glass_blur}px); -webkit-backdrop-filter: blur(${style.glass_blur}px);`;
             }
             if (style.glass_opacity < 1.0) {
-                // If opacity is set, we might need to apply it to the background color itself or opacity property
-                // But generally users might want the box transparent.
-                // Let's assume opacity applies to the whole background layer?
-                // Or better: Let user pick alpha in color picker? (HTML color input doesn't always support alpha well)
-                // Let's map global opacity:
-                // Actually easier: background-color: rgba(...) is best.
-                // But for gradients, we need rgba in stops.
-                // Simpler: element opacity? No that affects text.
-                // Hack: If glass, reduce alpha of colors?
-                // Let's just output `opacity: ${style.glass_opacity}` but that fades text too.
-                // Correct way: use rgba values. Converting hex to rgba.
-                // BUT implementation step called for opacity slider.
-                // Let's skip complex hex conversion for now and just set `opacity` on preview to demo, 
-                // but for REAL widget usage, we need a wrapper or RGBA conversion.
-                // Let's implement HexToRGBA helper for the CSS generation.
+
             }
 
             // Shadows

@@ -568,6 +568,19 @@
                     onchange="updateStylePreview()">
             </div>
 
+            <div class="style-option-row" id="fontRow">
+                <label>Font Family</label>
+                <div style="display: flex; gap: 8px;">
+                    <select id="styleFontFamily" style="flex: 1;" onchange="updateStylePreview()">
+                        <option value="">Inherit (Default)</option>
+                    </select>
+                    <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8em;"
+                        onclick="detectSystemFonts()">Detect Fonts</button>
+                </div>
+                <p style="font-size: 0.8em; color: var(--text-secondary); margin-top: 5px;">Click "Detect Fonts" to load
+                    fonts from your system.</p>
+            </div>
+
             <div class="style-option-row">
                 <label>Preview</label>
                 <div id="modalPreview" style="border: 1px dashed #666;">
@@ -584,7 +597,7 @@
         let currentConfig = {
             milestone_goal: 500,
             title_text: '惩罚轮盘进度',
-            title_style: { type: 'solid', colors: ['#E8D57C'], angle: 90, glass_blur: 0, glass_opacity: 1.0, shadow_color: '#000000', shadow_size: 0, border_color: '#ffffff', border_width: 0 },
+            title_style: { type: 'solid', colors: ['#E8D57C'], angle: 90, glass_blur: 0, glass_opacity: 1.0, shadow_color: '#000000', shadow_size: 0, border_color: '#ffffff', border_width: 0, font_family: '' },
             show_title: true,
             background_style: { type: 'linear', colors: ['#9C6C8C', '#5A4F77'], angle: 135, glass_blur: 0, glass_opacity: 1.0, shadow_color: '#000000', shadow_size: 0, border_color: 'rgba(255, 215, 0, 0)', border_width: 0 },
             show_background: true,
@@ -594,7 +607,7 @@
             progress_bar_end_color: '#C87041'
         };
 
-        const DEFAULT_TITLE_STYLE = { type: 'solid', colors: ['#E8D57C'], angle: 90, glass_blur: 0, glass_opacity: 1.0, shadow_color: '#000000', shadow_size: 0, border_color: '#ffffff', border_width: 0 };
+        const DEFAULT_TITLE_STYLE = { type: 'solid', colors: ['#E8D57C'], angle: 90, glass_blur: 0, glass_opacity: 1.0, shadow_color: '#000000', shadow_size: 0, border_color: '#ffffff', border_width: 0, font_family: '' };
         const DEFAULT_BG_STYLE = { type: 'linear', colors: ['#9C6C8C', '#5A4F77'], angle: 135, glass_blur: 0, glass_opacity: 1.0, shadow_color: '#000000', shadow_size: 0, border_color: 'rgba(255, 215, 0, 0)', border_width: 0 };
 
         let editingTarget = null;
@@ -798,6 +811,12 @@
             }
 
             if (isText) {
+                if (style.font_family) {
+                    el.style.fontFamily = style.font_family;
+                } else {
+                    el.style.fontFamily = '';
+                }
+
                 if (style.type === 'solid') {
                     el.style.background = 'none';
                     el.style.webkitBackgroundClip = 'unset';
@@ -863,6 +882,15 @@
             document.getElementById('styleBorderWidth').value = currentEditorStyle.border_width || 0;
             document.getElementById('borderWidthValue').textContent = currentEditorStyle.border_width || 0;
             document.getElementById('styleBorderColor').value = rgbaToHex(currentEditorStyle.border_color) || '#ffffff';
+            const fontSelect = document.getElementById('styleFontFamily');
+            const savedFont = currentEditorStyle.font_family || '';
+            if (savedFont && ![...fontSelect.options].some(opt => opt.value === savedFont)) {
+                const opt = document.createElement('option');
+                opt.value = savedFont;
+                opt.textContent = savedFont + (target === 'title' ? " (Current)" : "");
+                fontSelect.appendChild(opt);
+            }
+            fontSelect.value = savedFont;
 
             renderColorList();
             updateModalUI();
@@ -889,6 +917,7 @@
             // Border and glass blur don't apply to text (title)
             document.getElementById('borderRow').style.display = isTitle ? 'none' : 'block';
             document.getElementById('blurRow').style.display = isTitle ? 'none' : 'block';
+            document.getElementById('fontRow').style.display = isTitle ? 'block' : 'none';
         }
 
         function renderColorList() {
@@ -937,6 +966,7 @@
             currentEditorStyle.border_width = parseInt(document.getElementById('styleBorderWidth').value);
             document.getElementById('borderWidthValue').textContent = currentEditorStyle.border_width;
             currentEditorStyle.border_color = document.getElementById('styleBorderColor').value;
+            currentEditorStyle.font_family = document.getElementById('styleFontFamily').value;
 
             // Generate preview
             let alpha = currentEditorStyle.glass_opacity;
@@ -976,6 +1006,7 @@
                     previewText.style.webkitTextFillColor = 'transparent';
                     previewText.style.color = 'transparent';
                 }
+                previewText.style.fontFamily = currentEditorStyle.font_family || '';
                 previewText.style.textShadow = currentEditorStyle.shadow_size > 0 ? `0 0 ${currentEditorStyle.shadow_size}px ${currentEditorStyle.shadow_color}` : 'none';
             } else {
                 previewText.style.display = 'none';
@@ -1047,6 +1078,54 @@
             const a = parseFloat(parts[3]);
 
             return { hex: `#${r}${g}${b}`, opacity: a };
+        }
+
+        async function detectSystemFonts() {
+            const fontSelect = document.getElementById('styleFontFamily');
+            const statusText = fontSelect.parentElement.nextElementSibling;
+
+            if (!window.queryLocalFonts) {
+                alert('Your browser does not support font detection. Please use a modern version of Chrome or Edge.');
+                return;
+            }
+
+            try {
+                statusText.textContent = "Detecting fonts... Please check if your browser asks for permission.";
+                const availableFonts = await window.queryLocalFonts();
+
+                // Keep the default option
+                const currentVal = fontSelect.value;
+                fontSelect.innerHTML = '<option value="">Inherit (Default)</option>';
+
+                // Filter and sort unique font names
+                const fontNames = [...new Set(availableFonts.map(f => f.family))].sort();
+
+                // Ensure current value is kept if not in detected list
+                if (currentVal && !fontNames.includes(currentVal)) {
+                    const opt = document.createElement('option');
+                    opt.value = currentVal;
+                    opt.textContent = currentVal + " (Current)";
+                    fontSelect.appendChild(opt);
+                }
+
+                fontNames.forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    fontSelect.appendChild(opt);
+                });
+
+                // Restore value if it exists in new list
+                fontSelect.value = currentVal;
+                statusText.textContent = `Detected ${fontNames.length} system fonts.`;
+                statusText.style.color = 'var(--green)';
+
+                updateStylePreview();
+            } catch (err) {
+                console.error(err);
+                statusText.textContent = "Font detection failed or permission denied.";
+                statusText.style.color = 'var(--red)';
+            }
         }
     </script>
 

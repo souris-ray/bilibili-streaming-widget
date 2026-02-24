@@ -303,6 +303,11 @@
             }
 
             if (isText) {
+                if (style.font_family) {
+                    el.style.fontFamily = style.font_family;
+                } else {
+                    el.style.fontFamily = '';
+                }
                 if (style.type === 'solid') {
                     el.style.background = 'none';
                     el.style.webkitBackgroundClip = 'unset';

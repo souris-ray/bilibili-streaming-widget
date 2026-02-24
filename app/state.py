@@ -236,7 +236,8 @@ class GiftConfigState:
     DEFAULT_TITLE = "惩罚轮盘进度"
     DEFAULT_TITLE_STYLE = {
         'type': 'solid', 'colors': ['#E8D57C'], 'angle': 90, 'glass_blur': 0,
-        'glass_opacity': 1.0, 'shadow_color': '#000000', 'shadow_size': 0, 'border_color': '#ffffff', 'border_width': 0
+        'glass_opacity': 1.0, 'shadow_color': '#000000', 'shadow_size': 0, 'border_color': '#ffffff', 'border_width': 0,
+        'font_family': ''
     }
     DEFAULT_BG_STYLE = {
         'type': 'linear', 'colors': ['#9C6C8C', '#5A4F77'], 'angle': 135, 'glass_blur': 0,

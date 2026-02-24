@@ -5,6 +5,27 @@ import sys
 import time
 from pathlib import Path
 
+def clean_directories(directories):
+    """
+    Robustly removes specified directories.
+    Handles common Windows permission issues by retrying.
+    """
+    for directory in directories:
+        if directory.exists():
+            print(f"🧹 Cleaning: {directory}...")
+            # Attempt to remove with retries for Windows stability
+            max_retries = 3
+            for i in range(max_retries):
+                try:
+                    shutil.rmtree(directory)
+                    break
+                except Exception as e:
+                    if i < max_retries - 1:
+                        print(f"  ⏳ Retry {i+1} cleaning {directory.name}...")
+                        time.sleep(1)
+                    else:
+                        print(f"  ⚠️  Warning: Could not fully clean {directory.name}: {e}")
+
 def create_dist_package():
     """
     Creates a clean staging area, bundles the application, and optionally runs PyInstaller.
@@ -19,13 +40,25 @@ def create_dist_package():
     print(f"🚀 Starting Build Process for BiliUtility...")
     print(f"📂 Project Root: {PROJECT_ROOT}")
     
-    # 1. Clean Staging Area
-    if STAGING_DIR.exists():
-        print("🧹 Cleaning old staging directory...")
-        try:
-            shutil.rmtree(STAGING_DIR)
-        except Exception as e:
-            print(f"⚠️  Warning: Could not fully clean staging: {e}")
+    # 1. Handle Cleaning
+    cleanup_dirs = [STAGING_DIR, BUILD_DIR, DIST_DIR]
+    
+    # Check if we should only clean
+    should_clean_only = '--clean' in sys.argv
+    should_build = '--build' in sys.argv
+
+    if should_clean_only:
+        clean_directories(cleanup_dirs)
+        print("✨ Project cleaned.")
+        if not should_build:
+            return
+
+    # If building, always start with a clean staging area
+    # Note: We don't necessarily wipe 'build' and 'dist' every time unless specifically asked
+    # but 'dist_staging' is internal and should be fresh.
+    if should_build:
+        clean_directories([STAGING_DIR])
+
     STAGING_DIR.mkdir(parents=True, exist_ok=True)
 
     print("🏗️  Preparing staging area...")
@@ -38,7 +71,7 @@ def create_dist_package():
         dest = STAGING_DIR / folder
         if src.exists():
             # Filter out pycache and other garbage
-            shutil.copytree(src, dest, ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '.DS_Store'))
+            shutil.copytree(src, dest, ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '.DS_Store', '*.log'))
             print(f"  ✅ Copied folder: {folder}")
         else:
             print(f"  ⚠️  Missing optional folder: {folder}")
@@ -48,7 +81,7 @@ def create_dist_package():
         'plugin.json', 
         'README.md',
         'requirements.txt',
-        'biliutility.spec' # We copy the spec to staging, but run from root usually
+        'biliutility.spec'
     ]
     for file in core_files:
         src = PROJECT_ROOT / file
@@ -71,11 +104,6 @@ def create_dist_package():
     print("\n📦 Staging complete at 'dist_staging/'")
 
     # 5. Run PyInstaller
-    # We run PyInstaller from the PROJECT ROOT, pointing to the SPEC file.
-    # The SPEC file handles paths relative to itself.
-    
-    # Check if we should build
-    should_build = '--build' in sys.argv
     if not should_build:
         print("\nℹ️  Run with --build to execute PyInstaller automatically.")
         return
