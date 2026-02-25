@@ -1,4 +1,4 @@
-@import url('https://fonts.cdnfonts.com/css/terminus-ttf');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
 
 /* Solarized Color Palette */
 :root {
@@ -21,13 +21,24 @@
     --green: #859900;
 
     /* Font Stack */
-    --font-main: 'Terminus (TTF)', 'Terminus', 'Menlo', 'Monaco', 'Consolas', monospace;
+    --font-display: 'Geist', system-ui, -apple-system, sans-serif;
+    --font-mono: 'Geist Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+    /* Legacy alias — pages that reference --font-main still work */
+    --font-main: var(--font-display);
+
+    /* Border Radius Scale */
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+
+    /* Transitions */
+    --transition-fast: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 
     /* Default Theme (Dark) - Mapped to Semantic Names */
     --bg-primary: var(--base03);
     --bg-secondary: var(--base02);
     --bg-tertiary: var(--base02);
-    /* Panels/Cards */
 
     --text-primary: var(--base0);
     --text-secondary: var(--base01);
@@ -44,6 +55,10 @@
     --info: var(--blue);
 
     --shadow-color: rgba(0, 0, 0, 0.4);
+    /* Diffusion shadow — tinted toward base03 (dark mode) */
+    --shadow-card: 0 8px 32px -6px rgba(0, 43, 54, 0.65);
+    /* Inner glass refraction edge */
+    --border-refract: rgba(147, 161, 161, 0.12);
 }
 
 /* Light Theme Overrides */
@@ -57,20 +72,31 @@
     --text-accent: var(--blue);
 
     --border-color: var(--base1);
-    /* Slightly darker for distinct borders in light mode */
 
     --input-bg: rgba(255, 255, 255, 0.5);
     --input-border: var(--base1);
 
     --shadow-color: rgba(0, 0, 0, 0.1);
+    /* Diffusion shadow — lighter in light mode */
+    --shadow-card: 0 8px 32px -6px rgba(0, 43, 54, 0.12);
 }
 
-/* Utility Classes */
+/* Base Styles */
 body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
-    font-family: var(--font-main);
+    font-family: var(--font-display);
     transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Monospace elements */
+code,
+pre,
+.widget-url,
+.trigger,
+.url-text,
+.mono {
+    font-family: var(--font-mono);
 }
 
 .panel,
@@ -93,7 +119,12 @@ h6 {
     color: var(--text-primary);
 }
 
-/* Or use specific accents if desired */
+/* Focus ring — all interactive elements */
+:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+}
 
 /* Theme Toggle Button Style */
 .theme-toggle {
@@ -112,11 +143,15 @@ h6 {
     cursor: pointer;
     z-index: 1000;
     font-size: 1.2em;
-    box-shadow: 0 2px 5px var(--shadow-color);
-    transition: all 0.3s ease;
+    box-shadow: var(--shadow-card);
+    transition: var(--transition-fast);
 }
 
 .theme-toggle:hover {
     transform: scale(1.1);
     background: var(--bg-primary);
+}
+
+.theme-toggle:active {
+    transform: scale(0.95);
 }

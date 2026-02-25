@@ -2,6 +2,7 @@ import sys
 import os
 import asyncio
 import logging
+import threading
 import uvicorn
 from multiprocessing import freeze_support
 
@@ -10,10 +11,32 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import config
 from app import create_app
-from app.state import state
+from app.state import state, tts_config
 from app.services.tts import TTSService
 from app.infrastructure.blcsdk import init_sdk, shut_down_sdk
 from app.models import ParsedMessage
+
+
+def _prewarm_tts_engine():
+    """Pre-build the TTS engine pipeline in a background thread.
+    This avoids a multi-second delay on the first TTS message.
+    """
+    try:
+        from tts_engines.manager import tts_manager
+        log = logging.getLogger('biliutility')
+        log.info(f"[Startup] Pre-warming TTS engine: {tts_config.engine}...")
+        engine = tts_manager.switch_engine(tts_config.engine)
+        # switch_engine() only creates the engine object; pipeline is still lazy.
+        # Explicitly call _ensure_pipeline() to actually build it now.
+        if hasattr(engine, '_ensure_pipeline'):
+            engine._ensure_pipeline()
+            log.info("[Startup] Kokoro pipeline fully built and ready.")
+        else:
+            log.info("[Startup] TTS engine ready (no pipeline pre-build needed).")
+    except Exception as e:
+        logging.getLogger('biliutility').warning(
+            f"[Startup] TTS pre-warm failed (will init on first use): {e}"
+        )
 
 # Configure logging
 def init_logging():
@@ -40,11 +63,8 @@ if __name__ == "__main__":
     # Set mode
     config.IS_PLUGIN_MODE = False
     
-    # Run Uvicorn
-    # Use factory or app instance?
-    # create_app returns `socketio.ASGIApp` instance.
-    # uvicorn.run expects app instance or import string.
-    # We can pass the app instance directly.
+    # Pre-warm TTS engine in background so first message plays instantly
+    threading.Thread(target=_prewarm_tts_engine, daemon=True).start()
     
     app = create_app()
     
@@ -76,6 +96,9 @@ async def run(args):
 
     # Initialize SDK
     await init_sdk(on_sdk_message)
+    
+    # Pre-warm TTS engine in background thread
+    threading.Thread(target=_prewarm_tts_engine, daemon=True).start()
     
     # Create App
     app = create_app()

@@ -23,32 +23,40 @@
         }
 
         h1 {
-            text-align: center;
             color: var(--magenta);
-            /* Accent for header */
             margin-bottom: 30px;
+            font-size: 1.8em;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .widget-list {
-            max-width: 1000px;
-            margin: 0 auto;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: 1fr 1fr;
             gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .widget-list {
+                grid-template-columns: 1fr;
+            }
         }
 
         .widget-item {
             background-color: var(--bg-secondary);
-            border-radius: 8px;
+            border-radius: var(--radius-lg);
             padding: 20px;
-            box-shadow: 0 2px 8px var(--shadow-color);
-            transition: transform 0.3s, box-shadow 0.3s;
-            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-card);
+            transition: var(--transition-smooth);
+            border: 1px solid var(--border-refract);
         }
 
         .widget-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px var(--shadow-color);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-card);
         }
 
         .widget-item h2 {
@@ -59,14 +67,25 @@
         }
 
         .widget-item a {
+            display: inline-block;
+            margin-top: 4px;
             color: var(--cyan);
             text-decoration: none;
-            font-weight: bold;
-            transition: color 0.3s;
+            font-weight: 600;
+            font-size: 0.9em;
+            border: 1px solid var(--cyan);
+            border-radius: 999px;
+            padding: 4px 14px;
+            transition: var(--transition-fast);
         }
 
         .widget-item a:hover {
-            color: var(--blue);
+            background: rgba(42, 161, 152, 0.12);
+            color: var(--cyan);
+        }
+
+        .widget-item a:active {
+            transform: scale(0.97);
         }
 
         .widget-item p {
@@ -77,12 +96,12 @@
 
         .widget-url {
             background-color: var(--bg-primary);
-            padding: 10px;
-            border-radius: 4px;
-            font-family: var(--font-main);
-            font-size: 0.9em;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
+            font-size: 0.85em;
             color: var(--yellow);
-            margin-top: 10px;
+            margin-top: 8px;
             word-break: break-all;
             border: 1px solid var(--border-color);
         }
@@ -104,21 +123,22 @@
 
         .section-title {
             color: var(--violet);
-            text-align: center;
             margin: 40px 0 20px 0;
-            font-size: 1.2em;
+            font-size: 1em;
             text-transform: uppercase;
             letter-spacing: 2px;
+            padding-left: 12px;
+            border-left: 3px solid var(--violet);
         }
 
         .instructions {
             max-width: 800px;
             margin: 0 auto 40px auto;
             background-color: var(--bg-secondary);
-            border-radius: 8px;
+            border-radius: var(--radius-lg);
             padding: 20px;
             border-left: 4px solid var(--cyan);
-            box-shadow: 0 2px 8px var(--shadow-color);
+            box-shadow: var(--shadow-card);
         }
 
         .instructions h3 {
@@ -148,7 +168,7 @@
         </h1>
 
         <div class="instructions">
-            <h3>📝 How to Use</h3>
+            <h3>How to Use</h3>
             <ul>
                 <li>Each widget can be added to OBS as a Browser Source</li>
                 <li>Copy the URL from the widget and paste it into OBS</li>
@@ -275,7 +295,7 @@
         </div>
 
         <div class="instructions" style="margin-top: 40px;">
-            <h3>⚙️ Customization & Setup Guide</h3>
+            <h3>Customization &amp; Setup Guide</h3>
             <ul>
                 <li><strong>Visual Themes:</strong> Use the toggle in the top-right to switch between <strong>Solarized
                         Light</strong> and <strong>Dark</strong> modes. These settings persist across sessions.</li>
@@ -370,28 +390,30 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.9);
+            background-color: rgba(0, 43, 54, 0.92);
         }
 
         .config-modal-content {
-            background-color: #2a2a2a;
+            background-color: var(--bg-secondary);
             margin: 5% auto;
             padding: 40px;
-            border-radius: 12px;
+            border-radius: var(--radius-lg);
             max-width: 500px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border-refract);
+            box-shadow: var(--shadow-card);
         }
 
         .config-title {
-            color: #4ecdc4;
+            color: var(--cyan);
             text-align: center;
             margin-top: 0;
             margin-bottom: 20px;
-            font-size: 2em;
+            font-size: 1.6em;
+            font-weight: 600;
         }
 
         .config-description {
-            color: #cccccc;
+            color: var(--text-secondary);
             text-align: center;
             margin-bottom: 30px;
         }
@@ -402,7 +424,7 @@
 
         .form-group label {
             display: block;
-            color: #4ecdc4;
+            color: var(--cyan);
             margin-bottom: 8px;
             font-weight: bold;
         }
@@ -410,10 +432,10 @@
         .form-group input {
             width: 100%;
             padding: 12px;
-            background-color: #1a1a1a;
-            border: 2px solid #444;
+            background-color: var(--input-bg);
+            border: 2px solid var(--input-border);
             border-radius: 6px;
-            color: #ffffff;
+            color: var(--text-primary);
             font-size: 1em;
             box-sizing: border-box;
             transition: border-color 0.3s;
@@ -421,24 +443,24 @@
 
         .form-group input:focus {
             outline: none;
-            border-color: #4ecdc4;
+            border-color: var(--cyan);
         }
 
         .btn-primary {
             width: 100%;
             padding: 14px;
-            background-color: #4ecdc4;
-            color: #1a1a1a;
+            background-color: var(--cyan);
+            color: var(--base03);
             border: none;
             border-radius: 6px;
             font-size: 1.1em;
             font-weight: bold;
             cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
+            transition: var(--transition-fast);
         }
 
         .btn-primary:hover {
-            background-color: #3db8af;
+            opacity: 0.9;
             transform: translateY(-2px);
         }
 
@@ -449,18 +471,18 @@
         .btn-secondary {
             width: 48%;
             padding: 14px;
-            background-color: #444;
-            color: #ffffff;
+            background-color: var(--base01);
+            color: var(--base3);
             border: none;
             border-radius: 6px;
             font-size: 1.1em;
             font-weight: bold;
             cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
+            transition: var(--transition-fast);
         }
 
         .btn-secondary:hover {
-            background-color: #555;
+            opacity: 0.85;
             transform: translateY(-2px);
         }
 
@@ -479,8 +501,8 @@
         }
 
         .error-message {
-            background-color: #ff6b6b;
-            color: #ffffff;
+            background-color: var(--red);
+            color: var(--base3);
             padding: 12px;
             border-radius: 6px;
             margin-bottom: 20px;
@@ -490,7 +512,7 @@
         .user-confirmation {
             display: flex;
             align-items: center;
-            background-color: #1a1a1a;
+            background-color: var(--bg-primary);
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 20px;
@@ -501,22 +523,22 @@
             height: 80px;
             border-radius: 50%;
             margin-right: 20px;
-            border: 3px solid #4ecdc4;
+            border: 3px solid var(--cyan);
         }
 
         .user-info h3 {
-            color: #4ecdc4;
+            color: var(--cyan);
             margin: 0 0 8px 0;
             font-size: 1.5em;
         }
 
         .user-info p {
-            color: #cccccc;
+            color: var(--text-secondary);
             margin: 0;
         }
 
         .confirm-question {
-            color: #ffffff;
+            color: var(--text-primary);
             text-align: center;
             font-size: 1.2em;
             margin-bottom: 20px;
@@ -524,40 +546,55 @@
 
         .loading-message {
             text-align: center;
-            color: #4ecdc4;
+            color: var(--cyan);
         }
 
+        /* Login shimmer bar — replaces circular spinner */
         .spinner {
-            border: 4px solid #444;
-            border-top: 4px solid #4ecdc4;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+            width: 160px;
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            overflow: hidden;
             margin: 0 auto 20px auto;
+            position: relative;
         }
 
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
+        .spinner::after {
+            content: '';
+            position: absolute;
+            left: -60%;
+            top: 0;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+            animation: shimmer 1.2s ease-in-out infinite;
+        }
 
+        @keyframes shimmer {
+            to {
+                left: 160%;
+            }
         }
 
         .reset-btn {
-            float: right;
-            padding: 8px 16px;
-            background-color: #ff6b6b;
-            color: white;
+            padding: 6px 16px;
+            background-color: var(--red);
+            color: var(--base3);
             border: none;
-            border-radius: 4px;
-            font-size: 14px;
+            border-radius: var(--radius-sm);
+            font-size: 0.8em;
             cursor: pointer;
-            transition: background-color 0.3s;
+            font-weight: 600;
+            transition: var(--transition-fast);
         }
 
         .reset-btn:hover {
-            background-color: #ff5252;
+            opacity: 0.85;
+        }
+
+        .reset-btn:active {
+            transform: scale(0.97);
         }
     </style>
 

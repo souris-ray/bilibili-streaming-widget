@@ -160,19 +160,24 @@ async def handle_tts_toggle_autoplay(sid, data):
         state.tts_autoplay = enabled
         
         if state.tts_autoplay:
-            # If turning on, queue the first unread message to kick off the processor
+            # Queue ALL unread messages in chronological order
             unread = [msg for msg in state.tts_messages.values() if not msg.is_read]
-            unread.sort(key=lambda m: m.timestamp)
-            if unread and state.tts_queue.empty():
-                await state.tts_queue.put((unread[0], True))
+            unread.sort(key=lambda m: m.unique_id)  # unique_id starts with timestamp
+            for msg in unread:
+                await state.tts_queue.put((msg, True))
+            logger.info(f"[Socket] TTS Autoplay ON — queued {len(unread)} unread messages")
         else:
-            # If turning off, clear the queue so no further messages play automatically
+            # Drain pending queue items (currently-playing message finishes naturally)
+            # Do NOT mark anything as read — they keep their unread status
+            drained = 0
             while not state.tts_queue.empty():
                 try:
                     state.tts_queue.get_nowait()
                     state.tts_queue.task_done()
-                except asyncio.QueueEmpty:
+                    drained += 1
+                except Exception:
                     break
+            logger.info(f"[Socket] TTS Autoplay OFF — drained {drained} pending items from queue")
             await sio.emit('tts:queue_cleared', {'queue_size': 0})
     
     logger.info(f"[Socket] TTS Autoplay toggled to {enabled} by {sid}")

@@ -290,23 +290,18 @@ class TTSProcessor:
                     await self.sio.emit('tts:playback_complete', {
                         'unique_id': msg.unique_id
                     })
+                    # Update queue size counter on widget
+                    await self.sio.emit('tts:status', {
+                        'autoplay': state.tts_autoplay,
+                        'queue_size': state.tts_queue.qsize(),
+                        'is_playing': False
+                    })
                 
                 state.tts_queue.task_done()
                 
                 # Small delay between messages
                 await asyncio.sleep(0.5)
 
-                # Autoplay check logic handled by queue consumer natural behavior
-                # But we might need to enqueue more if we are consuming from 'unread' list like original logic?
-                # The original logic pulled from unread list if queue was empty.
-                # Here, we assume the provider (LogWatcher) pushes to queue.
-                # However, original logic:
-                # "If autoplay is on and queue is empty, check for unread messages"
-                # This suggests there is a pool of unread messages that are NOT in the queue?
-                # Yes, if autoplay was OFF, messages accumulate. When turned ON, they should be queued.
-                # We can handle this by having an explicit "fill queue" action when autoplay is toggled,
-                # rather than polling inside the consumer.
-                
             except asyncio.CancelledError:
                 break
             except Exception as e:

@@ -39,10 +39,11 @@
         }
 
         .header h1 {
-            font-size: 2.5em;
+            font-size: 2em;
             color: var(--violet);
             margin-bottom: 10px;
-            font-weight: 700;
+            font-weight: 600;
+            letter-spacing: -0.02em;
         }
 
         .header-btn {
@@ -73,8 +74,8 @@
             background: var(--bg-secondary);
             border-radius: 16px;
             padding: 30px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 8px 32px var(--shadow-color);
+            border: 1px solid var(--border-refract);
+            box-shadow: var(--shadow-card);
             margin-bottom: 30px;
             backdrop-filter: blur(4px);
         }
@@ -142,17 +143,17 @@
 
         .tier-captain .tier-header {
             color: var(--blue);
-            text-shadow: 0 0 10px rgba(38, 139, 210, 0.3);
+            letter-spacing: 0.05em;
         }
 
         .tier-admiral .tier-header {
             color: var(--red);
-            text-shadow: 0 0 10px rgba(220, 50, 47, 0.3);
+            letter-spacing: 0.05em;
         }
 
         .tier-governor .tier-header {
             color: var(--orange);
-            text-shadow: 0 0 10px rgba(203, 75, 22, 0.3);
+            letter-spacing: 0.05em;
         }
 
         .style-card {
@@ -234,7 +235,8 @@
         .sticky-footer {
             position: sticky;
             bottom: 0;
-            background: var(--bg-primary);
+            backdrop-filter: blur(12px);
+            background: color-mix(in srgb, var(--bg-primary) 85%, transparent);
             padding: 20px;
             border-top: 1px solid var(--border-color);
             display: flex;

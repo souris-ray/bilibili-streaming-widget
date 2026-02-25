@@ -32,16 +32,17 @@
         }
 
         .header {
-            text-align: center;
             margin-bottom: 40px;
         }
 
         .header h1 {
-            font-size: 2em;
+            font-size: 1.6em;
+            font-weight: 600;
             background: none;
             color: var(--violet);
             -webkit-text-fill-color: initial;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
+            letter-spacing: -0.02em;
         }
 
         .header p {
@@ -51,10 +52,10 @@
 
         .config-card {
             background: var(--bg-secondary);
-            border-radius: 16px;
+            border-radius: var(--radius-lg);
             padding: 30px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 8px 32px var(--shadow-color);
+            border: 1px solid var(--border-refract);
+            box-shadow: var(--shadow-card);
         }
 
         .panel-title {
@@ -94,12 +95,11 @@
             color: var(--text-primary);
             font-size: 1em;
             outline: none;
-            transition: border-color 0.3s, box-shadow 0.3s;
+            transition: var(--transition-fast);
         }
 
         input:focus {
             border-color: var(--violet);
-            box-shadow: 0 0 10px rgba(108, 113, 196, 0.2);
         }
 
         .toggle-password {
@@ -140,6 +140,11 @@
         .btn-save:hover {
             transform: translateY(-2px);
             opacity: 0.9;
+        }
+
+        .btn-save:active {
+            transform: scale(0.97) translateY(1px);
+            opacity: 1;
         }
 
         .btn-back {
@@ -194,14 +199,30 @@
                 <label for="aws_access_key">AWS Access Key ID</label>
                 <div class="input-wrapper">
                     <input type="password" id="aws_access_key" name="aws_access_key">
-                    <span class="toggle-password" onclick="toggleVisibility('aws_access_key')">👁️</span>
+                    <span class="toggle-password" onclick="toggleVisibility('aws_access_key')"
+                        title="Toggle visibility">
+                        <svg id="icon-aws_access_key" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg>
+                    </span>
                 </div>
             </div>
             <div class="form-group">
                 <label for="aws_secret_key">AWS Secret Access Key</label>
                 <div class="input-wrapper">
                     <input type="password" id="aws_secret_key" name="aws_secret_key">
-                    <span class="toggle-password" onclick="toggleVisibility('aws_secret_key')">👁️</span>
+                    <span class="toggle-password" onclick="toggleVisibility('aws_secret_key')"
+                        title="Toggle visibility">
+                        <svg id="icon-aws_secret_key" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg>
+                    </span>
                 </div>
             </div>
             <div class="form-group">
@@ -216,12 +237,21 @@
                 <label for="deepl_auth_key">DeepL Authentication Key</label>
                 <div class="input-wrapper">
                     <input type="password" id="deepl_auth_key" name="deepl_auth_key">
-                    <span class="toggle-password" onclick="toggleVisibility('deepl_auth_key')">👁️</span>
+                    <span class="toggle-password" onclick="toggleVisibility('deepl_auth_key')"
+                        title="Toggle visibility">
+                        <svg id="icon-deepl_auth_key" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg>
+                    </span>
                 </div>
             </div>
 
             <h2 class="panel-title" style="margin-top: 40px;">Webhook URLs (Mix It Up)</h2>
-            <p style="color: #8e8ea0; font-size: 0.9em; margin-bottom: 20px;">Configure webhook URLs for guard member
+            <p style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: 20px;">Configure webhook URLs for
+                guard member
                 celebration triggers. Enable webhooks in the Member Display configuration.</p>
             <div class="form-group">
                 <label for="webhook_url_captain">Captain (舰长) Webhook URL</label>
@@ -253,15 +283,18 @@
     </div>
 
     <script>
+        const eyeOpen = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+        const eyeClosed = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+
         function toggleVisibility(id) {
             const input = document.getElementById(id);
             const span = input.nextElementSibling;
             if (input.type === 'password') {
                 input.type = 'text';
-                span.textContent = '🔒';
+                span.innerHTML = eyeClosed;
             } else {
                 input.type = 'password';
-                span.textContent = '👁️';
+                span.innerHTML = eyeOpen;
             }
         }
 

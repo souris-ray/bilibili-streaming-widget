@@ -42,7 +42,7 @@ def create_dist_package():
     
     # 1. Handle Cleaning
     cleanup_dirs = [STAGING_DIR, BUILD_DIR, DIST_DIR]
-    
+
     # Check if we should only clean
     should_clean_only = '--clean' in sys.argv
     should_build = '--build' in sys.argv
@@ -53,12 +53,10 @@ def create_dist_package():
         if not should_build:
             return
 
-    # If building, always start with a clean staging area
-    # Note: We don't necessarily wipe 'build' and 'dist' every time unless specifically asked
-    # but 'dist_staging' is internal and should be fresh.
-    if should_build:
-        clean_directories([STAGING_DIR])
-
+    # Always wipe dist_staging before copying — prevents FileExistsError on repeat runs.
+    # build/ and dist/ are only wiped when --clean is explicitly passed (they hold
+    # PyInstaller artifacts that are expensive to regenerate).
+    clean_directories([STAGING_DIR])
     STAGING_DIR.mkdir(parents=True, exist_ok=True)
 
     print("🏗️  Preparing staging area...")

@@ -234,14 +234,25 @@ class CredentialsManager:
 class GiftConfigState:
     DEFAULT_MILESTONE_GOAL = 500
     DEFAULT_TITLE = "惩罚轮盘进度"
+
+    # Palette — single source of truth for every default color
+    DEFAULT_COUNT_COLOR  = '#FFF2D7'
+    DEFAULT_LABEL_COLOR  = '#FFF2D7'
+    DEFAULT_COMPAT_PB_START = '#E8D57C'  # backward-compat flat field only
+    DEFAULT_COMPAT_PB_END   = '#C87041'  # backward-compat flat field only
+
     DEFAULT_TITLE_STYLE = {
-        'type': 'solid', 'colors': ['#E8D57C'], 'angle': 90, 'glass_blur': 0,
+        'type': 'solid', 'colors': ['#FFF2D7'], 'angle': 90, 'glass_blur': 0,
         'glass_opacity': 1.0, 'shadow_color': '#000000', 'shadow_size': 0, 'border_color': '#ffffff', 'border_width': 0,
         'font_family': ''
     }
     DEFAULT_BG_STYLE = {
-        'type': 'linear', 'colors': ['#9C6C8C', '#5A4F77'], 'angle': 135, 'glass_blur': 0,
+        'type': 'linear', 'colors': ['#EEB86D', '#9946B2'], 'angle': 90, 'glass_blur': 0,
         'glass_opacity': 1.0, 'shadow_color': '#000000', 'shadow_size': 0, 'border_color': 'rgba(255, 215, 0, 0)', 'border_width': 0
+    }
+    DEFAULT_PROGRESS_BAR_STYLE = {
+        'type': 'linear', 'colors': ['#FFFFFF', '#FFE082'], 'angle': 90, 'glass_blur': 0,
+        'glass_opacity': 1.0, 'shadow_color': '#000000', 'shadow_size': 0, 'border_color': '#ffffff', 'border_width': 0
     }
 
     def __init__(self):
@@ -251,10 +262,12 @@ class GiftConfigState:
         self.show_title = True
         self.background_style = copy.deepcopy(self.DEFAULT_BG_STYLE)
         self.show_background = True
-        self.count_color = '#E8D57C'
-        self.label_color = 'rgba(255, 255, 255, 0.8)'
-        self.progress_bar_start_color = '#E8D57C'
-        self.progress_bar_end_color = '#C87041'
+        self.count_color = self.DEFAULT_COUNT_COLOR
+        self.label_color = self.DEFAULT_LABEL_COLOR
+        self.progress_bar_style = copy.deepcopy(self.DEFAULT_PROGRESS_BAR_STYLE)
+        # Kept for backward compatibility with old saved configs
+        self.progress_bar_start_color = self.DEFAULT_COMPAT_PB_START
+        self.progress_bar_end_color = self.DEFAULT_COMPAT_PB_END
         self.lock = threading.RLock()
         self.config_file = Path(config.DATA_PATH) / 'gift_config.json'
         self.load_config()
@@ -270,10 +283,19 @@ class GiftConfigState:
                     self.show_title = data.get('show_title', True)
                     self.background_style = data.get('background_style', copy.deepcopy(self.DEFAULT_BG_STYLE))
                     self.show_background = data.get('show_background', True)
-                    self.count_color = data.get('count_color', '#E8D57C')
-                    self.label_color = data.get('label_color', 'rgba(255, 255, 255, 0.8)')
-                    self.progress_bar_start_color = data.get('progress_bar_start_color', '#E8D57C')
-                    self.progress_bar_end_color = data.get('progress_bar_end_color', '#C87041')
+                    self.count_color = data.get('count_color', self.DEFAULT_COUNT_COLOR)
+                    self.label_color = data.get('label_color', self.DEFAULT_LABEL_COLOR)
+                    # Load progress_bar_style; fall back to old flat fields for migration
+                    pb_style = data.get('progress_bar_style', None)
+                    if pb_style:
+                        self.progress_bar_style = pb_style
+                    else:
+                        # Migrate from old flat colors
+                        start = data.get('progress_bar_start_color', self.DEFAULT_COMPAT_PB_START)
+                        end = data.get('progress_bar_end_color', self.DEFAULT_COMPAT_PB_END)
+                        self.progress_bar_style = {**copy.deepcopy(self.DEFAULT_PROGRESS_BAR_STYLE), 'colors': [start, end]}
+                    self.progress_bar_start_color = data.get('progress_bar_start_color', self.DEFAULT_COMPAT_PB_START)
+                    self.progress_bar_end_color = data.get('progress_bar_end_color', self.DEFAULT_COMPAT_PB_END)
         except Exception as e:
             logger.error(f"[Gift Config] Error loading config: {e}")
 
@@ -288,6 +310,7 @@ class GiftConfigState:
                 'show_background': self.show_background,
                 'count_color': self.count_color,
                 'label_color': self.label_color,
+                'progress_bar_style': self.progress_bar_style,
                 'progress_bar_start_color': self.progress_bar_start_color,
                 'progress_bar_end_color': self.progress_bar_end_color
             }
@@ -304,6 +327,12 @@ class GiftConfigState:
                     # Handle type conversion if needed
                     if k == 'milestone_goal':
                          self.milestone_goal = int(v)
+            # Keep flat color fields in sync with progress_bar_style
+            if 'progress_bar_style' in kwargs and isinstance(kwargs['progress_bar_style'], dict):
+                colors = kwargs['progress_bar_style'].get('colors', [])
+                if colors:
+                    self.progress_bar_start_color = colors[0]
+                    self.progress_bar_end_color = colors[1] if len(colors) > 1 else colors[0]
             self.save_config()
             
     def get_milestone_goal(self) -> int:
@@ -321,6 +350,7 @@ class GiftConfigState:
                 'show_background': self.show_background,
                 'count_color': self.count_color,
                 'label_color': self.label_color,
+                'progress_bar_style': self.progress_bar_style,
                 'progress_bar_start_color': self.progress_bar_start_color,
                 'progress_bar_end_color': self.progress_bar_end_color
             }
@@ -665,26 +695,49 @@ class SoundConfigState:
 # -------------------------
 class MemberProgressConfigState:
     DEFAULT_TITLE = "冲舰"
-    DEFAULT_STYLE = { "type": "solid", "colors": ["#E8D57C"], "angle": 90, "glass_blur": 0, "glass_opacity": 1.0, "shadow_color": "#000000", "shadow_size": 0, "border_color": "#ffffff", "border_width": 0 }
-    DEFAULT_BG_STYLE = { "type": "solid", "colors": ["#5A4F77"], "angle": 135, "glass_blur": 0, "glass_opacity": 1.0, "shadow_color": "#000000", "shadow_size": 0, "border_color": "rgba(255, 215, 0, 0)", "border_width": 0 }
+
+    # Palette — single source of truth for every default color
+    DEFAULT_COUNT_COLOR = '#C8FF9E'               # soft lime, echoes level-1 bar start
+    DEFAULT_LABEL_COLOR = 'rgba(200, 210, 230, 0.80)'  # muted blue-grey, secondary info
+
+    # Level bar gradient endpoints
+    LEVEL_1_START = '#A9FF68'  # lime green
+    LEVEL_1_END   = '#FF8989'  # coral
+    LEVEL_2_START = '#9BAFD9'  # periwinkle
+    LEVEL_2_END   = '#103783'  # deep navy
+    LEVEL_3_START = '#7C65A9'  # medium purple
+    LEVEL_3_END   = '#96D4CA'  # mint teal
+
+    DEFAULT_STYLE = {
+        "type": "solid", "colors": ["#F0ECE3"], "angle": 90,
+        "glass_blur": 0, "glass_opacity": 1.0,
+        "shadow_color": "#000000", "shadow_size": 0,
+        "border_color": "#ffffff", "border_width": 0
+    }
+    DEFAULT_BG_STYLE = {
+        "type": "linear", "colors": ["#1B1B2F", "#2C2C54"], "angle": 135,
+        "glass_blur": 0, "glass_opacity": 1.0,
+        "shadow_color": "#000000", "shadow_size": 0,
+        "border_color": "rgba(255, 215, 0, 0)", "border_width": 0
+    }
     DEFAULT_LEVELS = [
-        {"min": 0, "max": 50, "image": "souris_captain.png", "is_custom": False, "start_color": "#3498db", "end_color": "#5dade2"},
-        {"min": 50, "max": 100, "image": "souris_admiral.png", "is_custom": False, "start_color": "#9b59b6", "end_color": "#bb8fce"},
-        {"min": 100, "max": 999999, "image": "souris_governor.png", "is_custom": False, "start_color": "#f1c40f", "end_color": "#f7dc6f"}
+        {"min": 0,   "max": 50,     "image": "souris_captain.png",  "is_custom": False, "start_color": "#A9FF68", "end_color": "#FF8989"},
+        {"min": 50,  "max": 100,    "image": "souris_admiral.png",  "is_custom": False, "start_color": "#9BAFD9", "end_color": "#103783"},
+        {"min": 100, "max": 999999, "image": "souris_governor.png", "is_custom": False, "start_color": "#7C65A9", "end_color": "#96D4CA"}
     ]
 
     def __init__(self):
         self.lock = threading.RLock()
         self.config_file = Path(config.DATA_PATH) / 'member_progress.json'
         self.title_text = self.DEFAULT_TITLE
-        self.title_style = self.DEFAULT_STYLE.copy()
+        self.title_style = copy.deepcopy(self.DEFAULT_STYLE)
         self.show_title = True
-        self.background_style = self.DEFAULT_BG_STYLE.copy()
+        self.background_style = copy.deepcopy(self.DEFAULT_BG_STYLE)
         self.show_background = True
-        self.count_color = '#ffffff'
-        self.label_color = 'rgba(255, 255, 255, 0.8)'
+        self.count_color = self.DEFAULT_COUNT_COLOR
+        self.label_color = self.DEFAULT_LABEL_COLOR
         self.image_size = 80
-        self.levels = self.DEFAULT_LEVELS.copy()
+        self.levels = copy.deepcopy(self.DEFAULT_LEVELS)
         self.load_config()
 
     def load_config(self):
@@ -698,8 +751,8 @@ class MemberProgressConfigState:
                     self.title_style = data.get('title_style', copy.deepcopy(self.DEFAULT_STYLE))
                     self.background_style = data.get('background_style', copy.deepcopy(self.DEFAULT_BG_STYLE))
                     self.levels = data.get('levels', copy.deepcopy(self.DEFAULT_LEVELS))
-                    self.count_color = data.get('count_color', '#ffffff')
-                    self.label_color = data.get('label_color', 'rgba(255, 255, 255, 0.8)')
+                    self.count_color = data.get('count_color', self.DEFAULT_COUNT_COLOR)
+                    self.label_color = data.get('label_color', self.DEFAULT_LABEL_COLOR)
                     self.image_size = data.get('image_size', 80)
         except Exception as e:
             logger.error(f"[Member Progress] Error loading config: {e}")

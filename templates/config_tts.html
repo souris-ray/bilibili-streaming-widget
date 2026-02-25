@@ -31,16 +31,17 @@
         }
 
         .header {
-            text-align: center;
             margin-bottom: 40px;
         }
 
         .header h1 {
-            font-size: 2em;
+            font-size: 1.6em;
+            font-weight: 600;
             background: none;
             color: var(--magenta);
             -webkit-text-fill-color: initial;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
+            letter-spacing: -0.02em;
         }
 
         .header p {
@@ -63,10 +64,10 @@
 
         .config-card {
             background: var(--bg-secondary);
-            border-radius: 16px;
+            border-radius: var(--radius-lg);
             padding: 30px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 8px 32px var(--shadow-color);
+            border: 1px solid var(--border-refract);
+            box-shadow: var(--shadow-card);
         }
 
         .panel-title {
@@ -228,6 +229,11 @@
             opacity: 0.9;
         }
 
+        .btn-primary:active {
+            transform: scale(0.97) translateY(1px);
+            opacity: 1;
+        }
+
         .btn-primary:disabled {
             opacity: 0.6;
             cursor: not-allowed;
@@ -279,7 +285,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 43, 54, 0.88);
             z-index: 1000;
             justify-content: center;
             align-items: center;
@@ -291,13 +297,13 @@
 
         .modal {
             background: var(--bg-secondary);
-            border-radius: 16px;
+            border-radius: var(--radius-lg);
             padding: 40px;
             text-align: center;
             max-width: 400px;
             width: 90%;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 20px 60px var(--shadow-color);
+            border: 1px solid var(--border-refract);
+            box-shadow: var(--shadow-card);
         }
 
         .modal-icon {
@@ -320,29 +326,54 @@
             min-width: 120px;
         }
 
-        /* Loading spinner */
+        /* Loading shimmer bar — replaces circular spinner */
         .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid var(--bg-tertiary);
-            border-top-color: var(--magenta);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+            width: 160px;
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            overflow: hidden;
             margin: 0 auto 20px;
+            position: relative;
+        }
+
+        .spinner::after {
+            content: '';
+            position: absolute;
+            left: -60%;
+            top: 0;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, var(--magenta), transparent);
+            animation: shimmer 1.2s ease-in-out infinite;
         }
 
         .spinner-small {
-            width: 20px;
-            height: 20px;
-            border-width: 3px;
+            width: 60px;
+            height: 3px;
+            border-radius: 2px;
+            overflow: hidden;
             display: inline-block;
             vertical-align: middle;
             margin-right: 8px;
+            position: relative;
+            background: var(--bg-tertiary);
         }
 
-        @keyframes spin {
+        .spinner-small::after {
+            content: '';
+            position: absolute;
+            left: -60%;
+            top: 0;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, var(--magenta), transparent);
+            animation: shimmer 1.2s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
             to {
-                transform: rotate(360deg);
+                left: 160%;
             }
         }
 
@@ -437,14 +468,14 @@
         }
 
         .preset-btn {
-            padding: 6px 12px;
+            padding: 6px 14px;
             font-size: 0.8em;
             background: var(--bg-primary);
             border: 1px solid var(--border-color);
-            border-radius: 4px;
+            border-radius: 999px;
             color: var(--text-secondary);
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: var(--transition-fast);
         }
 
         .preset-btn:hover {
@@ -480,7 +511,8 @@
                             <option value="kokoro">Kokoro (Local - Offline)</option>
                             <option value="aws_polly">AWS Polly (Cloud - Requires Credentials)</option>
                         </select>
-                        <p class="speed-hint" id="engineHint" style="margin-top: 5px; color: #e74c3c; display: none;">
+                        <p class="speed-hint" id="engineHint"
+                            style="margin-top: 5px; color: var(--red); display: none;">
                             Requires AWS credentials in .env file (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION)
                         </p>
                     </div>

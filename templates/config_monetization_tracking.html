@@ -422,51 +422,37 @@
                 <input type="text" id="titleText" placeholder="e.g. 惩罚轮盘进度">
             </div>
 
-            <div class="inline-group">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                 <div>
                     <label>Title Style</label>
-                    <div id="titlePreview" class="style-preview-box"></div>
-                    <button class="btn btn-secondary" onclick="openStyleEditor('title')">Customize</button>
                 </div>
-                <div>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="showTitle" checked> Show Title
-                    </label>
-                </div>
+                <div id="titlePreview" class="style-preview-box"></div>
+                <button class="btn btn-secondary" onclick="openStyleEditor('title')">Customize</button>
+                <label class="checkbox-label" style="margin: 0;">
+                    <input type="checkbox" id="showTitle" checked> Show Title
+                </label>
             </div>
 
             <!-- Background -->
-            <div class="inline-group" style="margin-top: 20px;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 20px;">
                 <div>
                     <label>Background Style</label>
-                    <div id="bgPreview" class="style-preview-box"></div>
-                    <button class="btn btn-secondary" onclick="openStyleEditor('background')">Customize</button>
                 </div>
-                <div>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="showBg" checked> Show Background
-                    </label>
-                </div>
+                <div id="bgPreview" class="style-preview-box"></div>
+                <button class="btn btn-secondary" onclick="openStyleEditor('background')">Customize</button>
+                <label class="checkbox-label" style="margin: 0;">
+                    <input type="checkbox" id="showBg" checked> Show Background
+                </label>
             </div>
 
-            <!-- Progress Bar Colors -->
-            <div class="inline-group" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #444;">
+            <!-- Progress Bar Style -->
+            <div
+                style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 20px; padding-top: 20px; border-top: 1px solid #444;">
                 <div>
-                    <label for="progressBarStart">Progress Bar Start</label>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <input type="color" id="progressBarStart" value="#E8D57C" style="width: 50px; height: 35px;">
-                        <input type="range" id="progressStartOpacity" min="0" max="1" step="0.1" value="1"
-                            style="width: 50px;" title="Opacity" oninput="updateLivePreview()">
-                    </div>
+                    <label>Progress Bar Style</label>
                 </div>
-                <div>
-                    <label for="progressBarEnd">Progress Bar End</label>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <input type="color" id="progressBarEnd" value="#C87041" style="width: 50px; height: 35px;">
-                        <input type="range" id="progressEndOpacity" min="0" max="1" step="0.1" value="1"
-                            style="width: 50px;" title="Opacity" oninput="updateLivePreview()">
-                    </div>
-                </div>
+                <div id="progressBarPreview" class="style-preview-box"></div>
+                <button class="btn btn-secondary" onclick="openStyleEditor('progress_bar')">Customize</button>
             </div>
 
             <!-- Number Colors -->
@@ -530,7 +516,7 @@
             </div>
 
             <div class="style-option-row">
-                <label>Colors <button class="btn btn-secondary"
+                <label>Colors <button id="addColorBtn" class="btn btn-secondary"
                         style="padding: 4px 10px; font-size: 0.8em; float: right;" onclick="addColor()">+ Add
                         Color</button></label>
                 <div class="color-list" id="colorList"></div>
@@ -552,7 +538,7 @@
                     oninput="updateStylePreview()">
             </div>
 
-            <div class="style-option-row">
+            <div class="style-option-row" id="shadowRow">
                 <label>Shadow Size: <span id="shadowSizeValue">0</span>px</label>
                 <input type="range" id="styleShadowSize" min="0" max="30" value="0" oninput="updateStylePreview()">
                 <label style="margin-top: 5px;">Shadow Color</label>
@@ -597,18 +583,15 @@
         let currentConfig = {
             milestone_goal: 500,
             title_text: '惩罚轮盘进度',
-            title_style: { type: 'solid', colors: ['#E8D57C'], angle: 90, glass_blur: 0, glass_opacity: 1.0, shadow_color: '#000000', shadow_size: 0, border_color: '#ffffff', border_width: 0, font_family: '' },
+            title_style: { type: 'solid', colors: ['#FFFFFF'], angle: 90, glass_blur: 0, glass_opacity: 1.0, shadow_color: '#000000', shadow_size: 0, border_color: '#ffffff', border_width: 0, font_family: '' },
             show_title: true,
-            background_style: { type: 'linear', colors: ['#9C6C8C', '#5A4F77'], angle: 135, glass_blur: 0, glass_opacity: 1.0, shadow_color: '#000000', shadow_size: 0, border_color: 'rgba(255, 215, 0, 0)', border_width: 0 },
+            background_style: { type: 'linear', colors: ['#EEB86D', '#9946B2'], angle: 90, glass_blur: 0, glass_opacity: 1.0, shadow_color: '#000000', shadow_size: 0, border_color: 'rgba(255, 215, 0, 0)', border_width: 0 },
             show_background: true,
-            count_color: '#E8D57C',
-            label_color: 'rgba(255, 255, 255, 0.8)',
-            progress_bar_start_color: '#E8D57C',
-            progress_bar_end_color: '#C87041'
+            count_color: '#FFF9C4',
+            label_color: '#F3E5F5',
+            progress_bar_style: { type: 'linear', colors: ['#FFFFFF', '#FFE082'], angle: 90, glass_blur: 0, glass_opacity: 1.0, shadow_color: '#000000', shadow_size: 0, border_color: '#ffffff', border_width: 0 }
         };
 
-        const DEFAULT_TITLE_STYLE = { type: 'solid', colors: ['#E8D57C'], angle: 90, glass_blur: 0, glass_opacity: 1.0, shadow_color: '#000000', shadow_size: 0, border_color: '#ffffff', border_width: 0, font_family: '' };
-        const DEFAULT_BG_STYLE = { type: 'linear', colors: ['#9C6C8C', '#5A4F77'], angle: 135, glass_blur: 0, glass_opacity: 1.0, shadow_color: '#000000', shadow_size: 0, border_color: 'rgba(255, 215, 0, 0)', border_width: 0 };
 
         let editingTarget = null;
         let currentEditorStyle = {};
@@ -618,8 +601,6 @@
         const titleTextInput = document.getElementById('titleText');
         const showTitleInput = document.getElementById('showTitle');
         const showBgInput = document.getElementById('showBg');
-        const progressBarStartInput = document.getElementById('progressBarStart');
-        const progressBarEndInput = document.getElementById('progressBarEnd');
         const countColorInput = document.getElementById('countColor');
         const labelColorInput = document.getElementById('labelColor');
         const modal = document.getElementById('styleModal');
@@ -655,6 +636,14 @@
         async function loadConfig() {
             if (initialConfig && Object.keys(initialConfig).length > 0) {
                 console.log('Using server-injected config');
+                // Migrate old flat progress_bar_start/end_color to style object if needed
+                if (!initialConfig.progress_bar_style && (initialConfig.progress_bar_start_color || initialConfig.progress_bar_end_color)) {
+                    initialConfig.progress_bar_style = {
+                        type: 'linear', angle: 90, glass_blur: 0, glass_opacity: 1.0,
+                        shadow_color: '#000000', shadow_size: 0, border_color: '#ffffff', border_width: 0,
+                        colors: [initialConfig.progress_bar_start_color || '#FFFFFF', initialConfig.progress_bar_end_color || '#FFE082']
+                    };
+                }
                 currentConfig = { ...currentConfig, ...initialConfig };
 
                 // Populate UI
@@ -662,14 +651,6 @@
                 titleTextInput.value = currentConfig.title_text;
                 showTitleInput.checked = currentConfig.show_title;
                 showBgInput.checked = currentConfig.show_background;
-
-                const startData = rgbaToHexAndOpacity(currentConfig.progress_bar_start_color);
-                progressBarStartInput.value = startData.hex;
-                document.getElementById('progressStartOpacity').value = startData.opacity;
-
-                const endData = rgbaToHexAndOpacity(currentConfig.progress_bar_end_color);
-                progressBarEndInput.value = endData.hex;
-                document.getElementById('progressEndOpacity').value = endData.opacity;
 
                 const countData = rgbaToHexAndOpacity(currentConfig.count_color);
                 countColorInput.value = countData.hex;
@@ -690,17 +671,27 @@
                 const response = await fetch('/api/gifts/get_config');
                 const data = await response.json();
 
+                // Migrate old progress_bar colors to style object
+                let progressBarStyle = data.progress_bar_style || null;
+                if (!progressBarStyle && (data.progress_bar_start_color || data.progress_bar_end_color)) {
+                    progressBarStyle = {
+                        type: 'linear', angle: 90, glass_blur: 0, glass_opacity: 1.0,
+                        shadow_color: '#000000', shadow_size: 0, border_color: '#ffffff', border_width: 0,
+                        colors: [data.progress_bar_start_color || '#FFFFFF', data.progress_bar_end_color || '#FFE082']
+                    };
+                }
+                progressBarStyle = progressBarStyle || currentConfig.progress_bar_style;
+
                 currentConfig = {
                     milestone_goal: data.milestone_goal || 500,
                     title_text: data.title_text || '惩罚轮盘进度',
-                    title_style: data.title_style || JSON.parse(JSON.stringify(DEFAULT_TITLE_STYLE)),
+                    title_style: data.title_style || currentConfig.title_style,
                     show_title: data.show_title !== false,
-                    background_style: data.background_style || JSON.parse(JSON.stringify(DEFAULT_BG_STYLE)),
+                    background_style: data.background_style || currentConfig.background_style,
                     show_background: data.show_background !== false,
                     count_color: data.count_color || '#E8D57C',
                     label_color: data.label_color || 'rgba(255, 255, 255, 0.8)',
-                    progress_bar_start_color: data.progress_bar_start_color || '#E8D57C',
-                    progress_bar_end_color: data.progress_bar_end_color || '#C87041'
+                    progress_bar_style: progressBarStyle
                 };
 
                 // Populate UI
@@ -708,13 +699,6 @@
                 titleTextInput.value = currentConfig.title_text;
                 showTitleInput.checked = currentConfig.show_title;
                 showBgInput.checked = currentConfig.show_background;
-                const startData = rgbaToHexAndOpacity(currentConfig.progress_bar_start_color);
-                progressBarStartInput.value = startData.hex;
-                document.getElementById('progressStartOpacity').value = startData.opacity;
-
-                const endData = rgbaToHexAndOpacity(currentConfig.progress_bar_end_color);
-                progressBarEndInput.value = endData.hex;
-                document.getElementById('progressEndOpacity').value = endData.opacity;
 
                 const countData = rgbaToHexAndOpacity(currentConfig.count_color);
                 countColorInput.value = countData.hex;
@@ -734,8 +718,9 @@
 
         // Render mini previews on main page
         function renderMiniPreviews() {
-            renderMiniPreview('titlePreview', currentConfig.title_style || DEFAULT_TITLE_STYLE);
-            renderMiniPreview('bgPreview', currentConfig.background_style || DEFAULT_BG_STYLE);
+            renderMiniPreview('titlePreview', currentConfig.title_style);
+            renderMiniPreview('bgPreview', currentConfig.background_style);
+            renderMiniPreview('progressBarPreview', currentConfig.progress_bar_style);
         }
 
         function renderMiniPreview(elemId, style) {
@@ -785,10 +770,9 @@
             // Count color
             countNum.style.color = hexToRgba(countColorInput.value, document.getElementById('countOpacity').value);
 
-            // Progress bar
-            const startColor = hexToRgba(progressBarStartInput.value, document.getElementById('progressStartOpacity').value);
-            const endColor = hexToRgba(progressBarEndInput.value, document.getElementById('progressEndOpacity').value);
-            bar.style.background = `linear-gradient(90deg, ${startColor} 0%, ${endColor} 100%)`;
+            // Progress bar — use style object
+            const pbStyle = currentConfig.progress_bar_style;
+            applyStyleToPreview(bar, pbStyle, false);
 
             // Label color
             labelText.style.color = hexToRgba(labelColorInput.value, document.getElementById('labelOpacity').value);
@@ -852,7 +836,7 @@
         milestoneGoalInput.addEventListener('input', updatePresetButtons);
 
         // Input change listeners for live preview
-        [titleTextInput, showTitleInput, showBgInput, progressBarStartInput, progressBarEndInput, countColorInput, labelColorInput].forEach(el => {
+        [titleTextInput, showTitleInput, showBgInput, countColorInput, labelColorInput].forEach(el => {
             el.addEventListener('input', updateLivePreview);
             el.addEventListener('change', updateLivePreview);
         });
@@ -860,11 +844,16 @@
         // Style Editor Modal
         function openStyleEditor(target) {
             editingTarget = target;
-            document.getElementById('modalTitle').textContent = target === 'title' ? 'Edit Title Style' : 'Edit Background Style';
+            const titles = { title: 'Edit Title Style', background: 'Edit Background Style', progress_bar: 'Edit Progress Bar Style' };
+            document.getElementById('modalTitle').textContent = titles[target] || 'Edit Style';
 
-            let style = target === 'title' ? currentConfig.title_style : currentConfig.background_style;
+            let style;
+            if (target === 'title') style = currentConfig.title_style;
+            else if (target === 'background') style = currentConfig.background_style;
+            else style = currentConfig.progress_bar_style;
             if (!style || !style.type) {
-                style = target === 'title' ? JSON.parse(JSON.stringify(DEFAULT_TITLE_STYLE)) : JSON.parse(JSON.stringify(DEFAULT_BG_STYLE));
+                // Should not happen — server always injects a complete config.
+                style = { type: 'solid', colors: ['#ffffff'], angle: 90, glass_blur: 0, glass_opacity: 1.0, shadow_color: '#000000', shadow_size: 0, border_color: '#ffffff', border_width: 0 };
             }
             currentEditorStyle = JSON.parse(JSON.stringify(style));
 
@@ -910,14 +899,30 @@
         function updateModalUI() {
             const mode = document.getElementById('styleMode').value;
             const isTitle = editingTarget === 'title';
+            const isProgressBar = editingTarget === 'progress_bar';
+            const isSolid = mode === 'solid';
 
             // Angle only applies to linear gradient
             document.getElementById('angleRow').style.display = mode === 'linear' ? 'block' : 'none';
 
-            // Border and glass blur don't apply to text (title)
-            document.getElementById('borderRow').style.display = isTitle ? 'none' : 'block';
-            document.getElementById('blurRow').style.display = isTitle ? 'none' : 'block';
+            // Border and glass blur don't apply to text (title) or progress bar fill
+            document.getElementById('borderRow').style.display = (isTitle || isProgressBar) ? 'none' : 'block';
+            document.getElementById('blurRow').style.display = (isTitle || isProgressBar) ? 'none' : 'block';
             document.getElementById('fontRow').style.display = isTitle ? 'block' : 'none';
+
+            // Solid mode: only one color makes sense — hide Add Color button and trim list
+            const addBtn = document.getElementById('addColorBtn');
+            if (addBtn) addBtn.style.display = isSolid ? 'none' : 'inline-block';
+            if (isSolid && currentEditorStyle.colors && currentEditorStyle.colors.length > 1) {
+                currentEditorStyle.colors = [currentEditorStyle.colors[0]];
+                renderColorList();
+            }
+
+            // Shadow row: for title in solid mode, text-shadow on a solid fill is
+            // not visually meaningful (the glow would apply to the fill color itself).
+            // Hide shadow controls in that case. For gradient title or any background, keep it.
+            const shadowRow = document.getElementById('shadowRow');
+            if (shadowRow) shadowRow.style.display = (isTitle && isSolid) ? 'none' : 'block';
         }
 
         function renderColorList() {
@@ -1018,10 +1023,13 @@
         }
 
         function applyStyleChanges() {
+            const saved = JSON.parse(JSON.stringify(currentEditorStyle));
             if (editingTarget === 'title') {
-                currentConfig.title_style = JSON.parse(JSON.stringify(currentEditorStyle));
-            } else {
-                currentConfig.background_style = JSON.parse(JSON.stringify(currentEditorStyle));
+                currentConfig.title_style = saved;
+            } else if (editingTarget === 'background') {
+                currentConfig.background_style = saved;
+            } else if (editingTarget === 'progress_bar') {
+                currentConfig.progress_bar_style = saved;
             }
             renderMiniPreviews();
             updateLivePreview();
@@ -1036,10 +1044,13 @@
             currentConfig.title_text = titleTextInput.value;
             currentConfig.show_title = showTitleInput.checked;
             currentConfig.show_background = showBgInput.checked;
-            currentConfig.progress_bar_start_color = hexToRgba(progressBarStartInput.value, document.getElementById('progressStartOpacity').value);
-            currentConfig.progress_bar_end_color = hexToRgba(progressBarEndInput.value, document.getElementById('progressEndOpacity').value);
             currentConfig.count_color = hexToRgba(countColorInput.value, document.getElementById('countOpacity').value);
             currentConfig.label_color = hexToRgba(labelColorInput.value, document.getElementById('labelOpacity').value);
+            // Derive flat color fields from progress_bar_style for backward compat with server
+            if (currentConfig.progress_bar_style && currentConfig.progress_bar_style.colors) {
+                currentConfig.progress_bar_start_color = currentConfig.progress_bar_style.colors[0] || '#E8D57C';
+                currentConfig.progress_bar_end_color = currentConfig.progress_bar_style.colors[1] || currentConfig.progress_bar_start_color;
+            }
 
             try {
                 const response = await fetch('/api/gifts/update_config', {
