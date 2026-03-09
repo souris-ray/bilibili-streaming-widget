@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 import logging
-from app.state import voting_config, state
+from app.state import voting_config
 from app.routers.sockets import sio
 
 router = APIRouter(prefix="/api/voting", tags=["voting"])

@@ -1,6 +1,7 @@
+import asyncio
 import socketio
 import logging
-from app.state import state, voting_config, monitor_config
+from app.state import state, monitor_config
 
 logger = logging.getLogger('biliutility.sockets')
 
@@ -49,10 +50,6 @@ async def handle_speech_play(sid, data):
     # We can delegate to TTSService test logic?
     # Or just ignore if API covers it.
     pass
-
-# Helper to broadcast updates
-async def broadcast_voting_update():
-    await sio.emit('voting:update', await voting_config.get_state())
 
 def _build_tts_payload(msg):
     """Build TTS message payload for Socket.IO emission"""

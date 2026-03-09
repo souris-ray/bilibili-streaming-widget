@@ -107,11 +107,11 @@ def create_dist_package():
         return
 
     print("\n🔨 Running PyInstaller...")
+    print("🧹 Cleaning previous build output...")
+    clean_directories([DIST_DIR, BUILD_DIR])
     start_time = time.time()
     
     try:
-        # We need to ensure PyInstaller is available
-        # Using sys.executable to run the module ensures we use the current venv
         cmd = [
             sys.executable, '-m', 'PyInstaller',
             '--clean',

@@ -11,7 +11,6 @@ templates = Jinja2Templates(directory=config.TEMPLATES_PATH)
 
 @router.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    from app.state import monitor_config
     return templates.TemplateResponse("index.html", {"request": request, "config": {
         "room_id": monitor_config.room_id,
         "uid": monitor_config.uid,
@@ -75,15 +74,6 @@ async def widget_gifts(request: Request):
     })
     return templates.TemplateResponse("monetization_tracking_widget.html", {"request": request, "config": config_data})
 
-@router.get("/widget/gifts-v2", response_class=HTMLResponse)
-async def widget_gifts_v2(request: Request):
-    from app.state import gift_config, state
-    config_data = gift_config.get_config()
-    config_data.update({
-        'current_progress': state.milestone_progress,
-        'milestone_count': state.milestone_count
-    })
-    return templates.TemplateResponse("monetization_tracking_widget.html", {"request": request, "config": config_data})
 
 @router.get("/widget/members", response_class=HTMLResponse)
 async def widget_members(request: Request):

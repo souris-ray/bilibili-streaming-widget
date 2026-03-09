@@ -55,61 +55,33 @@ def init_logging():
     logging.getLogger('socketio').setLevel(logging.WARNING)
     logging.getLogger('urllib3').setLevel(logging.WARNING)
 
-# Standalone Entry Point
-if __name__ == "__main__":
-    freeze_support()
-    init_logging()
-    
-    # Set mode
-    config.IS_PLUGIN_MODE = False
-    
-    # Pre-warm TTS engine in background so first message plays instantly
-    threading.Thread(target=_prewarm_tts_engine, daemon=True).start()
-    
-    app = create_app()
-    
-    uvicorn.run(
-        app,
-        host="127.0.0.1",
-        port=config.FASTAPI_PORT,
-        log_level="info"
-    )
-
-# Plugin Entry Point (called by loader)
-async def run(args):
-    init_logging()
+async def _run_plugin_mode():
+    """Plugin entry: connect to blivechat via SDK, then start our own uvicorn server."""
     logging.info("Starting BiliUtility (Plugin Mode)...")
-    
-    # Set mode
-    config.IS_PLUGIN_MODE = True
-    
+
     # Callback for SDK messages
     async def on_sdk_message(msg: ParsedMessage):
         # Process TTS logic (translation etc)
         await TTSService.process_message_for_tts(msg)
         # Add to state (handles queues, gifts etc)
         await state.add_message(msg)
-        
+
         # Broadcast to Frontend Widgets
         from app.routers.sockets import broadcast_message
         await broadcast_message(msg)
 
-    # Initialize SDK
+    # Initialize SDK — reads BLC_PORT / BLC_TOKEN env vars automatically
     await init_sdk(on_sdk_message)
-    
-    # Pre-warm TTS engine in background thread
-    threading.Thread(target=_prewarm_tts_engine, daemon=True).start()
-    
+
     # Create App
     app = create_app()
-    
+
     # Configure Uvicorn server
-    # Note: In plugin mode, we use FLASK_PORT (5001) as legacy?
-    # Or should we use FASTAPI_PORT?
-    # Existing users expect 5001.
-    # We should probably use config.FLASK_PORT for plugin mode compatibility.
-    port = config.FLASK_PORT
-    
+    # NOTE: blivechat itself occupies its own port (e.g. 12450).
+    # We always use FASTAPI_PORT (5149) to avoid the collision.
+    port = config.FASTAPI_PORT
+    logging.info(f"[Startup] Plugin mode server starting on port {port}")
+
     config_uvicorn = uvicorn.Config(
         app=app,
         host="127.0.0.1",
@@ -117,10 +89,34 @@ async def run(args):
         log_level="info"
     )
     server = uvicorn.Server(config_uvicorn)
-    
+
     try:
         await server.serve()
     except asyncio.CancelledError:
         logging.info("Server cancelled")
     finally:
-        shut_down_sdk()
+        await shut_down_sdk()
+
+
+# Unified Entry Point
+if __name__ == "__main__":
+    freeze_support()
+    init_logging()
+
+    # Pre-warm TTS engine in background so first message plays instantly
+    threading.Thread(target=_prewarm_tts_engine, daemon=True).start()
+
+    if os.environ.get('BLC_PORT'):
+        # Plugin Mode: launched by blivechat (BLC_PORT env var is set)
+        config.IS_PLUGIN_MODE = True
+        asyncio.run(_run_plugin_mode())
+    else:
+        # Standalone Mode: direct launch (no blivechat)
+        config.IS_PLUGIN_MODE = False
+        app = create_app()
+        uvicorn.run(
+            app,
+            host="127.0.0.1",
+            port=config.FASTAPI_PORT,
+            log_level="info"
+        )

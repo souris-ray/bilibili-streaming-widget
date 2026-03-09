@@ -6,7 +6,9 @@ Elevate your stream with elegent, real-time widgets - goal tracking, interactive
 
 ![BiliUtility Badge](https://img.shields.io/badge/BiliUtility-Widget_Suite-00AEEC?style=for-the-badge)
 
-> **Like what you see?** Check out my [personal website](https://souris-ray.github.io/) for some ASMR RP scripts!
+> **Like what you see?** Check out my [website](https://souris-ray.github.io/) for some ASMR RP scripts!
+
+> **Have a question or would like to pitch a new feature?** Feel free to utilize Issues or find me through my website.
 
 ---
 

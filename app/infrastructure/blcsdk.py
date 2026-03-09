@@ -2,6 +2,7 @@ import asyncio
 import logging
 import json
 import os
+import signal
 from datetime import datetime
 from typing import Optional, Callable, Dict, Any
 
@@ -14,9 +15,8 @@ from app.models import ParsedMessage, MessageType
 logger = logging.getLogger('biliutility.sdk')
 
 _msg_handler: Optional['MsgHandler'] = None
-_backup_file = None
-_current_backup_date: Optional[str] = None
 _loop = None
+
 
 GUARD_LEVEL_NAMES = {
     sdk_models.GuardLevel.LV1: '舰长',
@@ -25,80 +25,63 @@ GUARD_LEVEL_NAMES = {
 }
 
 async def init_sdk(message_callback: Callable[[ParsedMessage], Any]):
-    """Initialize the message handler with blcsdk."""
+    """Initialize the message handler with blcsdk. Must be awaited before SDK messages arrive."""
     global _msg_handler, _loop
     _loop = asyncio.get_running_loop()
+
+    # Set the handler BEFORE init() so it's ready when BLC_INIT arrives
     _msg_handler = MsgHandler(message_callback, _loop)
     blcsdk.set_msg_handler(_msg_handler)
-    logger.info('[SDK] Message handler initialized')
 
-def shut_down_sdk():
-    """Clean up resources on shutdown."""
-    global _backup_file
+    # Actually connect to blivechat via WebSocket (reads BLC_PORT / BLC_TOKEN env vars)
+    await blcsdk.init()
+    logger.info('[SDK] SDK initialized and connected to blivechat')
+
+    # Check SDK version compatibility (per SDK docs: exit if incompatible)
+    if not blcsdk.is_sdk_version_compatible():
+        logger.warning('[SDK] SDK version is NOT compatible with blivechat — plugin may not work correctly')
+
+async def shut_down_sdk():
+    """Clean up resources on shutdown: clear handler, close WebSocket & HTTP session."""
     blcsdk.set_msg_handler(None)
-    if _backup_file is not None:
-        _backup_file.close()
-        _backup_file = None
-    logger.info('[SDK] Message handler shut down')
+    await blcsdk.shut_down()
+    logger.info('[SDK] SDK shut down cleanly')
 
-def _get_backup_file():
-    """Get or create the JSON backup log file for today."""
-    global _backup_file, _current_backup_date
 
-    # Using config from app/config.py which we imported as `config`
-    # Check if BACKUP_LOG_ENABLED is available there. 
-    # In app/config.py, we defined: `BACKUP_LOG_ENABLED` (default False via env?)
-    # Wait, in the original `config.py`, it was:
-    # BACKUP_LOG_ENABLED = os.getenv('ENABLE_BACKUP_LOG', 'false').lower() == 'true'
-    # In my new `app/config.py` (which I created earlier), I included it?
-    # Let's assume yes or use default logic.
-    
-    if not getattr(config, 'BACKUP_LOG_ENABLED', False):
-        return None
+# Commands that contain chat data we want to record
+_CHAT_COMMANDS = {50, 51, 52, 53, 54}  # ADD_TEXT, ADD_GIFT, ADD_MEMBER, ADD_SUPER_CHAT, DEL_SUPER_CHAT
 
-    today = datetime.now().strftime('%Y-%m-%d')
-    if _current_backup_date != today:
-        if _backup_file is not None:
-            _backup_file.close()
 
-        # BACKUP_LOG_PATH should be in config
-        backup_path = getattr(config, 'BACKUP_LOG_PATH', 'backups')
-        if not os.path.exists(backup_path):
-             os.makedirs(backup_path, exist_ok=True)
-             
-        filename = f'messages_{today}.jsonl'
-        filepath = os.path.join(backup_path, filename)
-        _backup_file = open(filepath, 'a', encoding='utf-8')
-        _current_backup_date = today
-        logger.info(f'[SDK] Opened backup log: {filepath}')
 
-    return _backup_file
+# Session start time — one filename per plugin session (matches room_{id}-{date}_{time}.jsonl pattern)
+_session_start = datetime.now().strftime('%Y%m%d_%H%M%S')
 
-def _write_backup_log(msg_type: str, data: Dict[str, Any], room_id: Optional[int] = None):
-    # This function is kept for backward compatibility if any other part uses it,
-    # but primarily we rely on raw logging now.
-    pass
+def _write_raw_message(command: Dict[str, Any], room_id: Optional[int] = None):
+    """
+    Dump the raw blcsdk command packet to log/messages/ as JSONL, unmodified.
+    Each line: {"timestamp": "...", "packet": {<raw command dict>}}
 
-async def _log_raw_packet(command: Dict[str, Any]):
-    """Async logging of raw JSON packet"""
+    If room_id is known, writes to:  room_{room_id}-{date}_{session}.jsonl
+    Otherwise falls back to:         raw_{date}.jsonl
+    """
     try:
-        # Use a separate file pattern for raw events
-        today = datetime.now().strftime('%Y-%m-%d')
-        # Using config.LOG_PATH
-        log_path = getattr(config, 'LOG_PATH', 'log')
-        if not os.path.exists(log_path):
-             os.makedirs(log_path, exist_ok=True)
-             
-        filepath = os.path.join(log_path, f'raw_plugin_events_{today}.jsonl')
-        
-        async with aiofiles.open(filepath, mode='a', encoding='utf-8') as f:
-            entry = {
-                'timestamp': datetime.now().isoformat(),
-                'packet': command
-            }
-            await f.write(json.dumps(entry, ensure_ascii=False) + '\n')
+        messages_path = getattr(config, 'BACKUP_LOG_PATH', os.path.join('log', 'messages'))
+        os.makedirs(messages_path, exist_ok=True)
+
+        today = datetime.now().strftime('%Y%m%d')
+        if room_id:
+            filename = f'room_{room_id}-{today}_{_session_start}.jsonl'
+        else:
+            filename = f'raw_{today}_{_session_start}.jsonl'
+
+        entry = {
+            'timestamp': datetime.now().isoformat(),
+            'packet': command          # raw dict, zero modification
+        }
+        with open(os.path.join(messages_path, filename), 'a', encoding='utf-8') as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + '\n')
     except Exception as e:
-        logger.error(f'[SDK] Failed to log raw packet: {e}')
+        logger.error(f'[SDK] Failed to write raw message: {e}')
 
 class MsgHandler(blcsdk.BaseHandler):
     def __init__(self, callback: Callable[[ParsedMessage], Any], loop: asyncio.AbstractEventLoop):
@@ -106,57 +89,57 @@ class MsgHandler(blcsdk.BaseHandler):
         self._loop = loop
 
     def on_client_stopped(self, client: blcsdk.BlcPluginClient, exception: Optional[Exception]):
-        logger.info('[SDK] blivechat disconnected')
+        """Called when blivechat exits or plugin is disabled. Per SDK docs, we must exit."""
+        logger.info('[SDK] blivechat disconnected — shutting down plugin')
+        # Signal the process to terminate gracefully
+        os.kill(os.getpid(), signal.SIGINT)
 
     def _safe_callback(self, msg: ParsedMessage):
-        """Invoke async callback from sync context"""
+        """Schedule async callback on the event loop (handle() runs on the same loop)."""
         if self._loop and self._loop.is_running():
-             asyncio.run_coroutine_threadsafe(self._callback(msg), self._loop)
+            self._loop.create_task(self._callback(msg))
 
     def handle(self, client: blcsdk.BlcPluginClient, command: dict):
-        # 1. Fire-and-forget raw logging
-        if _loop:
-            asyncio.run_coroutine_threadsafe(_log_raw_packet(command), _loop)
-        
-        # 2. Direct processing for efficiency
         cmd = command.get('cmd')
         data = command.get('data', {})
-        extra = command.get('extra', {})
-        
-        # Determine room_id if possible
-        # Check blcsdk/models.py: ExtraData has room_id
-        room_id = extra.get('room_id') if isinstance(extra, dict) else None
 
-        # Process specific commands directly
-        # Command.ADD_TEXT = 50
+        # Parse ExtraData using the SDK model for proper typing
+        extra = sdk_models.ExtraData.from_dict(command.get('extra', {}))
+        room_id = extra.room_id
+
+        # Skip messages generated by other plugins to avoid duplicates
+        if extra.is_from_plugin:
+            return
+
+        # Dump raw packet to log/messages/ for chat commands (skip heartbeats/system)
+        if cmd in _CHAT_COMMANDS:
+            _write_raw_message(command, room_id)
+            logger.info('[SDK] RAW: %s', json.dumps(command, ensure_ascii=False))
+
+        # Dispatch to specific processors
         if cmd == 50:
             self._process_add_text(data, room_id)
-        # Command.ADD_GIFT = 51
         elif cmd == 51:
             self._process_add_gift(data, room_id)
-        # Command.ADD_MEMBER = 52
         elif cmd == 52:
             self._process_add_member(data, room_id)
-        # Command.ADD_SUPER_CHAT = 53
         elif cmd == 53:
             self._process_add_super_chat(data, room_id)
-        
-        # We ignore other commands or let BaseHandler handle them if needed, 
-        # but since we override handle(), BaseHandler logic is bypassed.
-        # This is intentional for efficiency.
 
-    def _process_add_text(self, data: dict, room_id: Optional[int]):
-        # Structure from models.py AddTextMsg
-        # content, authorName, uid, authorType, ...
-        # data is a dict directly here.
-        
-        content = data.get('content', '')
-        author_name = data.get('authorName', '')
-        
-        # Logic from original _on_add_text
-        ts_dt = datetime.now() # SDK usually has timestamp in data? models.py says timestamp is NOT in AddTextMsg, it's implied?
-        # creating a timestamp now is safer
-        
+    def _process_add_text(self, data, room_id: Optional[int]):
+        # ADD_TEXT (cmd=50) sends data as a LIST on the blivechat wire protocol.
+        # Use the SDK model's from_command() to parse the positional list correctly.
+        try:
+            msg_obj = sdk_models.AddTextMsg.from_command(data)
+        except Exception as e:
+            logger.warning(f'[SDK] Failed to parse ADD_TEXT data: {e}')
+            return
+
+        content = msg_obj.content
+        author_name = msg_obj.author_name
+
+        ts_dt = datetime.now()
+
         parsed = ParsedMessage(
             timestamp=ts_dt,
             type=MessageType.DM,
@@ -201,13 +184,14 @@ class MsgHandler(blcsdk.BaseHandler):
         privilege_type = data.get('privilegeType', 0)
         guard_name = GUARD_LEVEL_NAMES.get(privilege_type, '未知舰队等级')
         
-        total_coin = data.get('totalCoin', 0)
+        total_coin = data.get('total_coin', 0)  # SDK wire uses snake_case 'total_coin' for AddMemberMsg
         value = total_coin / 1000
         
         webhook_type = None
-        if privilege_type == 1: webhook_type = 'captain'
+        # GuardLevel: LV3=1 (总督/Governor), LV2=2 (提督/Admiral), LV1=3 (舰长/Captain)
+        if privilege_type == 1: webhook_type = 'governor'
         elif privilege_type == 2: webhook_type = 'admiral'
-        elif privilege_type == 3: webhook_type = 'governor'
+        elif privilege_type == 3: webhook_type = 'captain'
 
         author_name = data.get('authorName', '')
         num = data.get('num', 0)

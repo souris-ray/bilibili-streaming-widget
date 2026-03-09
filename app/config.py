@@ -36,9 +36,6 @@ AUDIO_PATH = os.path.join(RESOURCE_BASE, 'audio_commands')
 FLASK_PORT = 5001 # Legacy/Plugin Port
 FASTAPI_PORT = 5149 # Standalone Port
 
-# JSON backup log settings
-BACKUP_LOG_ENABLED = True
-
 # Mode Flag (Set by main.py)
 IS_PLUGIN_MODE = False
 
